@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "maestro-rag"
+version = "1.0.0"
+description = "Production-grade RAG for skill knowledge retrieval — one-shot search at 100+ skills"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+    "chromadb>=0.5.0",
+    "sentence-transformers>=3.0.0",
+    "pyyaml>=6.0",
+    "rich>=13.0",
+    "click>=8.0",
+]
+
+[project.optional-dependencies]
+voyage = ["voyageai>=0.3.0"]
+watch  = ["watchdog>=4.0"]
+dev    = ["pytest>=8.0", "ruff>=0.5.0"]
+
+[project.scripts]
+maestro       = "maestro_rag.cli:main"
+maestro-mcp   = "maestro_rag.mcp_server:main"
+maestro-setup = "maestro_rag.setup:setup"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/maestro_rag"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

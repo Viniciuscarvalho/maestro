@@ -1,539 +1,117 @@
 ---
-name: skill-orchestrator
-description: 'Autonomous agent that scans projects, indexes available skills, and automatically routes the right expertise to every task. Use this skill ALWAYS — on every coding task, code review, architecture question, refactoring, debugging, or feature implementation. This is the meta-orchestrator that eliminates the need to manually invoke individual skills. Triggers on: any coding task, "help me build", "review this", "fix this", "implement", "refactor", "debug", file creation, PR review, architecture decisions, tech stack questions, or any development workflow. Works with any language but ships with deep Swift/SwiftUI expertise. Reads CLAUDE.md and Package.swift/project files to understand context automatically.'
+name: maestro
+description: Intelligent skill knowledge gateway. Routes tasks to the right knowledge without loading all skills into context. MUST be consulted before any coding task — call the search_skills MCP tool to retrieve relevant expertise from 100+ indexed skills covering Swift, SwiftUI, concurrency, testing, architecture, performance, and security.
 ---
 
-# Skill Orchestrator Agent
+# Maestro — Skill Knowledge Gateway
 
-## Overview
+## Critical Rule
 
-You are an autonomous skill orchestrator. Your job is to eliminate the friction of manually selecting and invoking skills. On every task, you silently scan the project context, match the task to the best available skills, load their knowledge, and apply it — all without the developer needing to think about which skill to use.
-
-**Philosophy**: The developer describes what they want to build. You figure out what knowledge is needed and bring it to bear.
-
-## Agent Behavior Contract
-
-1. **Always scan before acting.** On every new task, run the Project Scanner (Phase 1) to understand context.
-2. **Never ask the user which skill to use.** Route automatically based on task analysis.
-3. **Load skills lazily.** Only read reference files when they're actually needed for the current task.
-4. **Apply skills silently.** Don't announce "I'm now using the swift-concurrency skill." Just apply the knowledge.
-5. **Surface gaps proactively.** If no skill covers a needed domain, suggest what skill would help.
-6. **Respect CLAUDE.md above all.** Project-specific standards override general best practices.
-7. **Be language-agnostic by design.** The routing engine works with any tech stack.
-8. **Continuously learn.** After each task, update the project knowledge graph if new patterns emerge.
-
-## Execution Flow
-
-Every task follows this pipeline:
+BEFORE writing, reviewing, or modifying any code, ALWAYS call the `search_skills` MCP tool first. This retrieves precise, relevant knowledge from the indexed skill library. Do NOT rely on general knowledge when skill-specific expertise is available.
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  TASK RECEIVED                                          │
-│                                                         │
-│  Phase 1: SCAN → Detect project context                 │
-│     ├── Read CLAUDE.md (project rules)                  │
-│     ├── Read Package.swift / project config             │
-│     ├── Detect tech stack & language                    │
-│     └── Index available skills                          │
-│                                                         │
-│  Phase 2: CLASSIFY → Understand the task                │
-│     ├── What domain? (UI, concurrency, testing, etc.)   │
-│     ├── What action? (create, review, fix, refactor)    │
-│     └── What scope? (single file, module, architecture) │
-│                                                         │
-│  Phase 3: ROUTE → Select skills to apply                │
-│     ├── Match task domains to skill capabilities        │
-│     ├── Resolve conflicts (project rules > general)     │
-│     └── Load only needed reference files                │
-│                                                         │
-│  Phase 4: EXECUTE → Do the work with full context       │
-│     ├── Apply all matched skill knowledge               │
-│     ├── Follow project-specific standards               │
-│     └── Produce output following skill guidelines       │
-│                                                         │
-│  Phase 5: LEARN → Update knowledge graph                │
-│     ├── Record patterns discovered                      │
-│     ├── Note skill gaps encountered                     │
-│     └── Suggest improvements                            │
-└─────────────────────────────────────────────────────────┘
+EVERY task → search_skills("description of what you need") → apply knowledge → respond
 ```
 
----
+## How to Use
 
-## Phase 1: Project Scanner
+### Step 1: Search for Knowledge
 
-**Objective**: Build a mental model of the project before writing any code.
-
-### Step 1.1 — Read Project Rules
+Call the MCP tool with a description of what you need:
 
 ```
-Priority order:
-1. .claude/CLAUDE.md          → Project-specific coding standards (HIGHEST PRIORITY)
-2. .claude/settings.json      → Tool and agent configuration
-3. CLAUDE.md (root)           → Alternative location for standards
-4. CONTRIBUTING.md            → Contribution guidelines
-5. .swiftlint.yml             → Linter rules (Swift projects)
-6. .eslintrc / biome.json     → Linter rules (JS/TS projects)
+search_skills("Sendable conformance warning in actor class")
+search_skills("SwiftUI @Observable state management pattern")
+search_skills("write unit tests with Swift Testing #expect")
+search_skills("NavigationStack deep linking coordinator pattern")
 ```
 
-**Action**: Read whichever of these exist. Extract:
-- Architecture pattern (MVVM, TCA, Clean Architecture, etc.)
-- Naming conventions
-- Testing requirements
-- Dependency injection approach
-- Error handling patterns
-- Design system / UI component rules
-- Any custom rules or constraints
-
-### Step 1.2 — Detect Tech Stack
-
-```
-Detection signals (check in order):
-
-Swift/iOS/macOS:
-  - Package.swift → SwiftPM project (read for Swift version, dependencies, targets)
-  - *.xcodeproj / *.xcworkspace → Xcode project
-  - Check: Swift tools version, deployment targets, enabled features
-  - Check: SWIFT_STRICT_CONCURRENCY, SWIFT_DEFAULT_ACTOR_ISOLATION in .pbxproj
-
-TypeScript/JavaScript:
-  - package.json → Node/Deno/Bun project
-  - tsconfig.json → TypeScript configuration
-  - Check: framework (React, Next.js, Vue, Angular, Svelte)
-
-Python:
-  - pyproject.toml / setup.py / requirements.txt
-  - Check: framework (Django, FastAPI, Flask)
-
-Rust:
-  - Cargo.toml → Rust project
-  - Check: edition, features, workspace structure
-
-Go:
-  - go.mod → Go module
-  - Check: Go version, dependencies
-
-Multi-language:
-  - Detect all languages present
-  - Identify primary vs secondary
-```
-
-**Action**: Identify the primary language, framework, and version constraints. This determines which skills are relevant.
-
-### Step 1.3 — Index Available Skills
-
-Scan for skills in these locations (in priority order):
-
-```
-1. Project-local skills:
-   .claude/skills/          → Project-specific skills
-   
-2. User skills:
-   ~/.claude/skills/        → User's personal skill library
-
-3. Plugin skills:
-   Installed plugins with skills/ directories
-
-4. Built-in knowledge:
-   Skills loaded in context (from Project files or system)
-```
-
-For each skill found, extract:
-- `name` (from YAML frontmatter)
-- `description` (trigger patterns)
-- `references/` directory listing (available deep knowledge)
-- Compatibility with detected tech stack
-
-**Build a Skill Registry** — a mental index mapping:
-```
-domain → [matching skills] → [available references]
-```
-
-See `references/skill-registry.md` for the full registry format and built-in skill catalog.
-
----
-
-## Phase 2: Task Classifier
-
-**Objective**: Understand what the developer is asking for and map it to domains.
-
-### Classification Dimensions
-
-#### Domain Detection
-| Signal | Domain |
-|--------|--------|
-| View, UI, layout, SwiftUI, component, screen | `ui` |
-| async, await, actor, Task, concurrency, thread | `concurrency` |
-| test, spec, mock, stub, fixture, TDD | `testing` |
-| review, PR, MR, diff, code quality | `code-review` |
-| performance, slow, optimize, memory, profile | `performance` |
-| security, auth, keychain, token, encryption | `security` |
-| architecture, pattern, DI, module, layer | `architecture` |
-| API, endpoint, network, request, REST, GraphQL | `networking` |
-| data, model, CoreData, persistence, database | `data` |
-| navigation, routing, deeplink, coordinator | `navigation` |
-| error, crash, bug, fix, debug | `debugging` |
-| deploy, CI, CD, build, release | `devops` |
-| accessibility, a11y, VoiceOver, Dynamic Type | `accessibility` |
-
-#### Action Detection
-| Signal | Action |
-|--------|--------|
-| create, build, implement, add, new | `create` |
-| review, check, audit, analyze | `review` |
-| fix, debug, resolve, solve | `fix` |
-| refactor, improve, clean, modernize | `refactor` |
-| explain, how, why, what | `explain` |
-| migrate, upgrade, convert, update | `migrate` |
-| test, verify, validate | `test` |
-
-#### Scope Detection
-| Signal | Scope |
-|--------|-------|
-| Single file mentioned | `file` |
-| Feature, module, component | `module` |
-| Architecture, system-wide, project | `system` |
-| PR, MR, diff | `changeset` |
-
-### Multi-Domain Tasks
-
-Most real tasks span multiple domains. Examples:
-- "Build a login screen" → `ui` + `networking` + `security` + `testing`
-- "Review this PR" → `code-review` + (detect from diff content)
-- "Fix this crash" → `debugging` + (detect from stack trace)
-- "Migrate to Swift 6" → `concurrency` + `migration` + `architecture`
-
-**Rule**: Always check for secondary domains. A UI task almost always involves state management. A networking task almost always involves error handling.
-
----
-
-## Phase 3: Skill Router
-
-**Objective**: Match classified task to the best skills and load relevant knowledge.
-
-### Routing Table (Swift Projects)
-
-```
-Domain: ui
-  Primary: swiftui-expert-skill
-  References to load:
-    - state-management.md (if state involved)
-    - modern-apis.md (if using SwiftUI APIs)
-    - view-structure.md (if composing views)
-    - performance-patterns.md (if list/scroll involved)
-    - liquid-glass.md (if iOS 26+ requested)
-    - sheet-navigation-patterns.md (if sheets/navigation)
-
-Domain: concurrency
-  Primary: swift-concurrency
-  References to load:
-    - async-await-basics.md (if writing async code)
-    - actors.md (if protecting shared state)
-    - sendable.md (if crossing isolation boundaries)
-    - tasks.md (if managing task lifecycle)
-    - threading.md (if isolation/threading questions)
-    - migration.md (if migrating to Swift 6)
-    - performance.md (if async performance issues)
-
-Domain: testing
-  Primary: swift-testing + swift-testing-expert
-  References to load:
-    - fundamentals.md (if writing new tests)
-    - expectations.md (if assertion patterns)
-    - parameterized-testing.md (if multiple inputs)
-    - test-doubles.md (if mocking/stubbing)
-    - fixtures.md (if test data patterns)
-    - async-testing-and-waiting.md (if testing async code)
-    - migration-from-xctest.md (if migrating from XCTest)
-
-Domain: code-review
-  Primary: swift-code-reviewer
-  References to load:
-    - swift-quality-checklist.md
-    - swiftui-review-checklist.md
-    - performance-review.md
-    - security-checklist.md
-    - architecture-patterns.md
-    - custom-guidelines.md
-  Secondary skills also loaded:
-    - swift-best-practices (for language patterns)
-    - swiftui-expert-skill (for UI code)
-
-Domain: architecture
-  Primary: swift-best-practices
-  References to load:
-    - api-design.md (if designing APIs)
-    - concurrency.md (if concurrency architecture)
-    - swift6-features.md (if modern patterns)
-
-Domain: performance
-  Primary: swiftui-expert-skill (performance-patterns)
-  References to load:
-    - performance-patterns.md
-    - list-patterns.md
-    - image-optimization.md
-
-Domain: security
-  Primary: swift-code-reviewer (security-checklist)
-  References to load:
-    - security-checklist.md
-```
-
-See `references/routing-engine.md` for the complete routing table including non-Swift stacks.
-
-### Routing Rules
-
-1. **Project rules always win.** If CLAUDE.md says "use TCA", don't suggest MVVM.
-2. **Combine skills, don't choose.** Most tasks benefit from 2-3 skills simultaneously.
-3. **Load references lazily.** Don't read all reference files upfront — only when the specific sub-topic is encountered.
-4. **Skill knowledge is additive.** Apply the UNION of all matched skills, not just the primary.
-5. **When in doubt, scan broader.** It's better to apply slightly more knowledge than to miss something.
-
-### Conflict Resolution
-
-When skills disagree:
-```
-Priority: CLAUDE.md > Primary skill > Secondary skill > General best practice
-```
-
-### Phase 3b: Semantic RAG Search
-
-When keyword-based routing (above) produces insufficient results, activate the RAG engine for semantic matching. This phase runs **after** the keyword routing table and **before** execution.
-
-#### Activation Triggers
-
-Run Phase 3b when ANY of these conditions are true:
-
-1. **Zero matches** — keyword routing matched no skill triggers or domain signals
-2. **Ambiguous matches** — 3+ skills matched with similar priority and no clear winner
-3. **Long-form natural language** — the task contains more than 10 words
-4. **Conversational phrasing** — the task uses phrases like:
-   - "help me", "how do I", "I want to", "what's the best way to"
-   - "can you", "I need to", "walk me through", "show me how"
-   - "I'm trying to", "what should I use for"
-
-#### RAG Pipeline (5 phases)
-
-```
-Phase 3b activates → Run RAG engine (see references/rag-engine.md):
-
-  RAG-1: DECOMPOSE → Break task into intent, domain, complexity, implicit requirements
-  RAG-2: SCORE     → Score each skill using semantic similarity (see scoring rubric)
-  RAG-3: RETRIEVE  → Lazy-load only the reference files relevant to THIS task
-  RAG-4: OPTIMIZE  → Merge multi-skill contexts, deduplicate, respect context budget
-  RAG-5: DECIDE    → Apply confidence thresholds:
-                      > 70  → Route confidently (proceed to Phase 4)
-                      50-70 → Route with broader context (load extra references)
-                      < 50  → Flag skill gap (suggest missing skill)
-```
-
-#### Integration with Phase 3
-
-```
-Phase 3: Skill Router
-  ├── Step 1: Keyword routing (routing table above)
-  │     ├── Clear match? → Proceed to Phase 4
-  │     └── No clear match? → Continue to Step 2
-  │
-  └── Step 2: Semantic RAG search (Phase 3b)
-        ├── Load: references/semantic-index.md (skill signatures)
-        ├── Load: references/rag-engine.md (retrieval protocol)
-        ├── Run: 5-phase RAG pipeline
-        ├── Confident? → Proceed to Phase 4 with RAG-selected skills
-        └── Skill gap? → Surface gap, apply general practices, proceed to Phase 4
-```
-
-#### Example: RAG Resolving an Ambiguous Task
-
-```
-Task: "I want to make sure my data model updates are reflected
-       everywhere in the app without causing any threading issues"
-
-Keyword routing result: AMBIGUOUS
-  - "data model" → could be swift-best-practices (api-design)
-  - "threading" → could be swift-concurrency
-  - "updates reflected everywhere" → could be swiftui-expert-skill (state)
-
-Phase 3b activates:
-  RAG-1: intent=fix/create, domain=state-management+concurrency, implicit=@Observable
-  RAG-2: swiftui-expert-skill (80), swift-concurrency (65), swift-best-practices (25)
-  RAG-3: Load state-management.md + actors.md
-  RAG-5: Score 80 → CONFIDENT
-
-Result: Primary swiftui-expert-skill, secondary swift-concurrency
-        (keyword routing alone couldn't determine this)
-```
-
-See `references/rag-engine.md` for the complete RAG retrieval protocol and scoring rubric.
-See `references/semantic-index.md` for per-skill semantic signatures and example queries.
-
----
-
-## Phase 4: Execution
-
-**Objective**: Do the actual work, informed by all relevant skills.
-
-### Execution Rules
-
-1. **Don't mention the orchestration.** The developer doesn't need to know which skills were activated. Just produce excellent work.
-
-2. **Apply knowledge naturally.** If the swift-concurrency skill says "don't use DispatchSemaphore with async/await", just don't use it. Don't say "according to the concurrency skill..."
-
-3. **Follow the strictest standard.** If both the project CLAUDE.md and a skill have opinions, follow whichever is stricter.
-
-4. **Check your work against all loaded skills.** Before presenting output, mentally run through the checklists from each loaded skill.
-
-5. **Proactively prevent issues.** If writing UI code and you know from the concurrency skill that a pattern will cause issues, prevent it before it happens.
-
-### Quality Gate
-
-Before presenting any code output, verify against this checklist:
-
-```
-□ Does it follow CLAUDE.md project standards?
-□ Does it follow the primary skill's best practices?
-□ Does it handle errors properly?
-□ Is it tested (or testable)?
-□ Does it follow naming conventions?
-□ Is concurrency handled correctly?
-□ Are there any force unwraps or unsafe patterns?
-□ Would it pass the code-review skill's checks?
-```
-
----
-
-## Phase 5: Knowledge Graph & Continuous Learning
-
-**Objective**: Build project intelligence over time.
-
-### What to Track
-
-After each task, note:
-- **Patterns discovered**: Architecture patterns, naming conventions, common abstractions
-- **Dependencies used**: Third-party libraries and their patterns
-- **Skill gaps**: Domains where no skill provided guidance
-- **Project idioms**: Recurring patterns specific to this project
-- **Decision records**: Why certain approaches were chosen
-
-### Knowledge Graph Structure
-
-```
-project-knowledge/
-├── context.md           → Project overview, tech stack, team conventions
-├── patterns.md          → Discovered patterns and idioms
-├── dependencies.md      → Third-party library usage patterns
-├── skill-gaps.md        → Missing skills and suggested additions
-├── decisions.md         → Architecture decision records
-└── learnings.md         → Insights from past tasks
-```
-
-See `references/knowledge-graph.md` for the complete knowledge graph specification.
-
-### Suggesting New Skills
-
-When the orchestrator identifies a gap — a domain where no skill provides guidance — it should:
-
-1. **Name the gap**: "This project uses Combine/RxSwift but no reactive programming skill is loaded."
-2. **Describe what the skill would cover**: "A skill covering reactive patterns, operator selection, and memory management."
-3. **Suggest sources**: Link to relevant documentation or community resources.
-4. **Offer to create it**: "Would you like me to create a basic skill for this domain?"
-
----
-
-## Skill Discovery & Installation
-
-### Scanning for Skills
-
-When the orchestrator starts, it should scan for skills:
-
+Tips for good queries:
+- Include the specific problem: `"Fix Sendable warning"` not just `"concurrency"`
+- Include the context: `"in actor class"` or `"for view model"`
+- For compound tasks, make multiple calls:
+  ```
+  search_skills("SwiftUI login form @Observable")
+  search_skills("async authentication network request")
+  search_skills("unit test login view model mock")
+  ```
+
+### Step 2: Apply Retrieved Knowledge
+
+The tool returns 5–7 relevant chunks with:
+- Which skill and file they come from
+- The section and heading path
+- The actual content with code examples and patterns
+
+Apply this knowledge directly. Do not announce "according to the skill…" — just use the patterns naturally.
+
+### Step 3: For Complex Tasks
+
+If a task spans multiple domains, make multiple search calls:
+
+| Task                   | Searches needed                          |
+|------------------------|------------------------------------------|
+| `"Build login screen"` | UI + auth + networking + testing         |
+| `"Fix data race"`      | concurrency + actors + sendable          |
+| `"Add new feature"`    | architecture + UI + testing              |
+| `"Performance audit"`  | performance + SwiftUI + profiling        |
+
+## When MCP Is Not Available
+
+If the `search_skills` tool is not available (e.g., Claude.ai without MCP):
+
+1. Ask the user to run:
+   ```bash
+   maestro context "description of task"
+   ```
+2. User pastes the output into the conversation
+3. Apply the retrieved knowledge
+
+Alternatively, the user can run:
 ```bash
-# Project-local skills
-find .claude/skills -name "SKILL.md" 2>/dev/null
-
-# User skills  
-find ~/.claude/skills -name "SKILL.md" 2>/dev/null
-
-# Skills in context (from Project files)
-# These are already loaded — extract from available context
+maestro search "query"
 ```
+to see results interactively.
 
-### Skill Index Format
+## Skill Index
 
-Each discovered skill is indexed as:
+These are the skills available in the knowledge base. Use this index to understand WHAT is available, then call `search_skills` to get the ACTUAL content.
 
-```yaml
-- name: swift-concurrency
-  path: ~/.claude/skills/swift-concurrency/
-  domains: [concurrency, async, actors, sendable, threading]
-  actions: [create, review, fix, migrate, explain]
-  languages: [swift]
-  references:
-    - async-await-basics.md
-    - actors.md
-    - sendable.md
-    - tasks.md
-    - threading.md
-    - migration.md
-    - performance.md
-    - testing.md
-    - memory-management.md
-    - core-data.md
-    - linting.md
-    - async-sequences.md
-  triggers:
-    - "async/await"
-    - "actor isolation"
-    - "Sendable"
-    - "data race"
-    - "Swift 6 migration"
-```
+<!-- SKILL_INDEX_START -->
+<!-- This section is auto-generated by `maestro index`. -->
+<!-- Each entry is: skill name | domains | description summary -->
 
-See `references/skill-registry.md` for the complete pre-built index of all known Swift skills.
+| Skill                | Domains                           | Covers                                                                                                                                                    |
+|----------------------|-----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| swift-best-practices | concurrency, api-design, swift6   | Swift 6+ best practices, naming conventions, actor isolation, async/await patterns, API design guidelines, availability attributes                         |
+| swift-concurrency    | concurrency, actors, sendable     | Deep async/await patterns, actor isolation, Sendable conformance, Task groups, threading model, Core Data concurrency, migration to Swift 6               |
+| swift-testing        | testing, mocks, fixtures          | Swift Testing framework (@Test, #expect, #require), test doubles taxonomy, fixtures, parameterized tests, integration testing, snapshot testing            |
+| swift-testing-expert | testing, parameterized, migration | Advanced Swift Testing: traits, tags, parallel execution, async waiting, XCTest migration, test plans, Xcode workflows                                     |
+| swiftui-expert-skill | ui, state-management, performance | SwiftUI state management (@Observable, @State, @Binding), modern APIs, view composition, performance patterns, ForEach optimization, Liquid Glass          |
+| swift-code-reviewer  | architecture, security, review    | Multi-layer code review: concurrency safety, SwiftUI patterns, performance, security, architecture compliance, project standards                           |
 
----
+<!-- SKILL_INDEX_END -->
 
-## Multi-Language Support
+## Domains Covered
 
-### Extending to New Languages
+The knowledge base covers these domains (use these terms in your searches):
 
-The orchestrator is language-agnostic by design. To support a new language:
+- **concurrency** — async/await, actors, Sendable, Task, isolation, data races, Swift 6
+- **ui** — SwiftUI views, state management, modifiers, layout, navigation, sheets
+- **testing** — Swift Testing, @Test, #expect, mocks, stubs, fixtures, parameterized
+- **state-management** — @Observable, @State, @Binding, @Environment, property wrappers
+- **performance** — view updates, ForEach optimization, lazy loading, profiling
+- **security** — Keychain, credentials, force unwrap safety, input validation
+- **architecture** — MVVM, TCA, dependency injection, repository pattern, coordinators
+- **error-handling** — typed throws, Result, guard, do-catch patterns
+- **navigation** — NavigationStack, coordinators, deep linking, sheets
+- **migration** — Swift 5→6, breaking changes, deprecated API replacement
 
-1. **Detect the tech stack** (Phase 1.2 already supports multiple languages)
-2. **Install language-specific skills** (the routing engine adapts)
-3. **The routing table extends automatically** when new skills are added
+## Auto-Indexing
 
-### Cross-Language Patterns
+The RAG engine automatically indexes skills when:
+- First `search_skills` call (empty index detected)
+- Skills are modified (file hash change detection)
+- Explicit: `maestro index` command
 
-Some skills apply across languages:
-- Code review methodology
-- Testing principles (Arrange-Act-Assert, F.I.R.S.T.)
-- Architecture patterns (Clean Architecture, DI)
-- Security principles
-- Performance profiling methodology
-- API design principles
-
-The orchestrator should apply these universal skills regardless of language, then layer language-specific skills on top.
-
----
-
-## Quick Start for New Projects
-
-When entering a new project for the first time:
-
-1. **Scan**: Read CLAUDE.md, detect tech stack, index skills
-2. **Report**: Silently note what's available and what's missing
-3. **Adapt**: Apply the right skills from the first task onward
-4. **Suggest**: If skill gaps exist, mention them naturally: "I notice this project uses X but I don't have a specialized skill for it. I'll apply general best practices, but you might benefit from adding a skill for X."
-
----
-
-## References
-
-Load these when deeper guidance is needed:
-
-- **`references/skill-registry.md`** — Complete catalog of known skills with domains, triggers, and reference files. Load when indexing skills or resolving routing decisions.
-- **`references/routing-engine.md`** — Full routing tables for all supported languages and frameworks. Load when handling a task in an unfamiliar domain.
-- **`references/semantic-index.md`** — Rich semantic signatures for each skill with example queries, anti-examples, and capability matrices. Load when RAG search is activated (Phase 3b).
-- **`references/rag-engine.md`** — 5-phase RAG retrieval protocol for semantic skill matching. Load when keyword routing fails or returns ambiguous results.
-- **`references/knowledge-graph.md`** — Knowledge graph specification, update protocols, and continuous learning patterns. Load when building or updating project intelligence.
-- **`references/project-scanner.md`** — Detailed project scanning procedures, file detection patterns, and tech stack identification. Load when entering a new project.
+No manual indexing step is required for normal use.
