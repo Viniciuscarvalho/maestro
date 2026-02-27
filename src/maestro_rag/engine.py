@@ -448,6 +448,7 @@ class MaestroEngine:
                 name: {
                     "chunks": fp.chunk_count,
                     "domains": fp.domains,
+                    "description": fp.description,
                 }
                 for name, fp in self._fingerprints.items()
             },
