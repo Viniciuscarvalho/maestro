@@ -45,6 +45,21 @@ triggers:
   - "clarity at point of use"
 depends_on: []
 priority: 5
+semantic_signature:
+  description: >
+    Guides idiomatic Swift API design, naming conventions, and language-level
+    best practices. Covers Swift API Design Guidelines (clarity at point of use),
+    Swift 6 language features, and platform availability annotations.
+  clusters:
+    - api-design-and-naming
+    - swift-6-language-features
+    - platform-availability
+    - code-organization
+    - protocol-oriented-design
+  disambiguation: >
+    Do NOT use for concurrency-specific patterns (use swift-concurrency),
+    SwiftUI view building (use swiftui-expert-skill), or code review
+    workflows (use swift-code-reviewer).
 ```
 
 ### swift-concurrency
@@ -81,6 +96,22 @@ triggers:
   - "nonisolated"
 depends_on: []
 priority: 8
+semantic_signature:
+  description: >
+    Deep expertise in Swift's structured concurrency: async/await, actors,
+    Sendable protocol, Task groups, AsyncSequence, and Swift 6 strict
+    concurrency migration. Solves data races, isolation boundary issues,
+    and GCD-to-modern-concurrency migration.
+  clusters:
+    - async-await-and-continuations
+    - actor-isolation-and-mainactor
+    - sendable-and-data-safety
+    - task-lifecycle-and-cancellation
+    - swift-6-concurrency-migration
+  disambiguation: >
+    Do NOT use for SwiftUI view building or state management (use
+    swiftui-expert-skill), Swift naming conventions (use swift-best-practices),
+    or writing test assertions (use swift-testing-expert).
 ```
 
 ### swift-testing
@@ -114,6 +145,22 @@ triggers:
   - "F.I.R.S.T."
 depends_on: []
 priority: 7
+semantic_signature:
+  description: >
+    Covers testing methodology and patterns: test doubles (mocks, stubs, spies,
+    fakes), fixture management, integration testing strategies, and snapshot
+    testing. Provides the "how to structure tests" knowledge independent of
+    any specific testing framework.
+  clusters:
+    - test-double-patterns
+    - fixture-and-test-data
+    - integration-testing-strategy
+    - snapshot-and-ui-regression
+    - test-organization-and-naming
+  disambiguation: >
+    Do NOT use for Swift Testing framework syntax like @Test or #expect (use
+    swift-testing-expert), for code review workflows (use swift-code-reviewer),
+    or for building production features (use domain-specific skills).
 ```
 
 ### swift-testing-expert
@@ -146,6 +193,22 @@ triggers:
   - "test plan"
 depends_on: [swift-testing]
 priority: 9
+semantic_signature:
+  description: >
+    Expert-level knowledge of the Swift Testing framework: @Test macro,
+    #expect/#require assertions, traits and tags, parameterized testing
+    with @Test(arguments:), parallel execution control, and XCTest
+    migration. Handles framework-specific syntax and advanced features.
+  clusters:
+    - test-macro-and-assertions
+    - parameterized-test-arguments
+    - traits-tags-and-filtering
+    - parallel-execution-control
+    - xctest-migration-path
+  disambiguation: >
+    Do NOT use for general testing methodology like mock/stub patterns (use
+    swift-testing), for reviewing existing test quality (use swift-code-reviewer),
+    or for testing concurrency code specifically (use swift-concurrency).
 ```
 
 ### swiftui-expert-skill
@@ -183,6 +246,23 @@ triggers:
   - "Liquid Glass"
 depends_on: []
 priority: 8
+semantic_signature:
+  description: >
+    Comprehensive SwiftUI expertise: view composition, state management
+    (@Observable, property wrappers), navigation (NavigationStack, sheets),
+    layout systems, performance optimization, and platform-specific patterns
+    from iOS 14 through iOS 26 Liquid Glass.
+  clusters:
+    - state-management-and-data-flow
+    - view-composition-and-extraction
+    - navigation-and-presentation
+    - performance-and-identity
+    - platform-apis-and-modernization
+  disambiguation: >
+    Do NOT use for concurrency compiler warnings (use swift-concurrency),
+    writing test assertions (use swift-testing-expert), code review
+    workflows (use swift-code-reviewer), or Swift naming conventions
+    (use swift-best-practices).
 ```
 
 ### swift-code-reviewer
@@ -213,6 +293,22 @@ triggers:
   - "check this code"
 depends_on: [swift-best-practices, swiftui-expert-skill]
 priority: 7
+semantic_signature:
+  description: >
+    Structured code review methodology for Swift projects: PR review
+    workflows, quality checklists, security audits, performance reviews,
+    and architecture validation. Operates in review/audit mode — evaluates
+    existing code, does not create new code.
+  clusters:
+    - pr-review-workflow
+    - swift-quality-and-idioms
+    - security-and-vulnerability-audit
+    - performance-and-memory-review
+    - architecture-and-solid-validation
+  disambiguation: >
+    Do NOT use for creating new code or features (use domain-specific skills),
+    for writing tests (use swift-testing-expert), or for explaining Swift
+    concepts (use swift-best-practices or swift-concurrency).
 ```
 
 ---
