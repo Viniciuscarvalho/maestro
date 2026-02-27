@@ -1,7 +1,7 @@
 # Maestro — Production RAG for Skill Knowledge Retrieval
 
 <p align="center">
-  <img src="assets/banner.svg" alt="Maestro Banner" width="100%"/>
+  <img src="assets/banner.jpg" alt="Maestro Banner" width="100%"/>
 </p>
 
 <p align="center">
