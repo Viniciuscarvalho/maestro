@@ -296,6 +296,77 @@ When skills disagree:
 Priority: CLAUDE.md > Primary skill > Secondary skill > General best practice
 ```
 
+### Phase 3b: Semantic RAG Search
+
+When keyword-based routing (above) produces insufficient results, activate the RAG engine for semantic matching. This phase runs **after** the keyword routing table and **before** execution.
+
+#### Activation Triggers
+
+Run Phase 3b when ANY of these conditions are true:
+
+1. **Zero matches** — keyword routing matched no skill triggers or domain signals
+2. **Ambiguous matches** — 3+ skills matched with similar priority and no clear winner
+3. **Long-form natural language** — the task contains more than 10 words
+4. **Conversational phrasing** — the task uses phrases like:
+   - "help me", "how do I", "I want to", "what's the best way to"
+   - "can you", "I need to", "walk me through", "show me how"
+   - "I'm trying to", "what should I use for"
+
+#### RAG Pipeline (5 phases)
+
+```
+Phase 3b activates → Run RAG engine (see references/rag-engine.md):
+
+  RAG-1: DECOMPOSE → Break task into intent, domain, complexity, implicit requirements
+  RAG-2: SCORE     → Score each skill using semantic similarity (see scoring rubric)
+  RAG-3: RETRIEVE  → Lazy-load only the reference files relevant to THIS task
+  RAG-4: OPTIMIZE  → Merge multi-skill contexts, deduplicate, respect context budget
+  RAG-5: DECIDE    → Apply confidence thresholds:
+                      > 70  → Route confidently (proceed to Phase 4)
+                      50-70 → Route with broader context (load extra references)
+                      < 50  → Flag skill gap (suggest missing skill)
+```
+
+#### Integration with Phase 3
+
+```
+Phase 3: Skill Router
+  ├── Step 1: Keyword routing (routing table above)
+  │     ├── Clear match? → Proceed to Phase 4
+  │     └── No clear match? → Continue to Step 2
+  │
+  └── Step 2: Semantic RAG search (Phase 3b)
+        ├── Load: references/semantic-index.md (skill signatures)
+        ├── Load: references/rag-engine.md (retrieval protocol)
+        ├── Run: 5-phase RAG pipeline
+        ├── Confident? → Proceed to Phase 4 with RAG-selected skills
+        └── Skill gap? → Surface gap, apply general practices, proceed to Phase 4
+```
+
+#### Example: RAG Resolving an Ambiguous Task
+
+```
+Task: "I want to make sure my data model updates are reflected
+       everywhere in the app without causing any threading issues"
+
+Keyword routing result: AMBIGUOUS
+  - "data model" → could be swift-best-practices (api-design)
+  - "threading" → could be swift-concurrency
+  - "updates reflected everywhere" → could be swiftui-expert-skill (state)
+
+Phase 3b activates:
+  RAG-1: intent=fix/create, domain=state-management+concurrency, implicit=@Observable
+  RAG-2: swiftui-expert-skill (80), swift-concurrency (65), swift-best-practices (25)
+  RAG-3: Load state-management.md + actors.md
+  RAG-5: Score 80 → CONFIDENT
+
+Result: Primary swiftui-expert-skill, secondary swift-concurrency
+        (keyword routing alone couldn't determine this)
+```
+
+See `references/rag-engine.md` for the complete RAG retrieval protocol and scoring rubric.
+See `references/semantic-index.md` for per-skill semantic signatures and example queries.
+
 ---
 
 ## Phase 4: Execution
@@ -462,5 +533,7 @@ Load these when deeper guidance is needed:
 
 - **`references/skill-registry.md`** — Complete catalog of known skills with domains, triggers, and reference files. Load when indexing skills or resolving routing decisions.
 - **`references/routing-engine.md`** — Full routing tables for all supported languages and frameworks. Load when handling a task in an unfamiliar domain.
+- **`references/semantic-index.md`** — Rich semantic signatures for each skill with example queries, anti-examples, and capability matrices. Load when RAG search is activated (Phase 3b).
+- **`references/rag-engine.md`** — 5-phase RAG retrieval protocol for semantic skill matching. Load when keyword routing fails or returns ambiguous results.
 - **`references/knowledge-graph.md`** — Knowledge graph specification, update protocols, and continuous learning patterns. Load when building or updating project intelligence.
 - **`references/project-scanner.md`** — Detailed project scanning procedures, file detection patterns, and tech stack identification. Load when entering a new project.

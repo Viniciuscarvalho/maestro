@@ -77,6 +77,62 @@ Every task flows through a 5-phase pipeline:
 | **Execute** | Applies all matched skill knowledge silently — you never see "loading skill X", just better output |
 | **Learn** | Updates the project knowledge graph with discovered patterns, decisions, and skill gaps |
 
+## How routing works
+
+Maestro uses a two-path routing architecture to match tasks to skills:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  TASK RECEIVED                                                │
+│                                                               │
+│  ┌─────────────────────────────────────────────────────────┐  │
+│  │  Fast Path: Keyword + Decision Tree                      │  │
+│  │  ├── Match trigger words against skill registry          │  │
+│  │  ├── Walk decision tree (review? create? fix? migrate?)  │  │
+│  │  └── Clear match? → Load references → Execute            │  │
+│  └──────────────────────┬──────────────────────────────────┘  │
+│                         │ No clear match?                      │
+│  ┌──────────────────────▼──────────────────────────────────┐  │
+│  │  Semantic Path: RAG Engine                               │  │
+│  │  ├── RAG-1: Decompose query (intent, domain, implicit)   │  │
+│  │  ├── RAG-2: Score skills by semantic similarity          │  │
+│  │  ├── RAG-3: Lazy-load only relevant references           │  │
+│  │  ├── RAG-4: Merge multi-skill context, deduplicate       │  │
+│  │  └── RAG-5: Confidence check (>70 route, <50 flag gap)   │  │
+│  └─────────────────────────────────────────────────────────┘  │
+│                                                               │
+│  → Phase 4: Execute with full skill context                   │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Fast path** handles the majority of tasks — when you mention `@Test`, `SwiftUI`, `async/await`, or say "review this PR", keyword matching instantly routes to the right skill. This path is zero-overhead and deterministic.
+
+**Semantic path** activates when keywords fail: natural language queries, conceptual questions, or ambiguous multi-domain tasks. The RAG engine decomposes your query, scores each skill using a weighted similarity rubric, and loads only the references that matter.
+
+### Example: RAG improving routing
+
+```
+You: "I want to make sure my data model updates are reflected
+      everywhere in the app without causing any threading issues"
+
+Without RAG (keyword only):
+  - "data model" → maybe swift-best-practices?
+  - "threading" → maybe swift-concurrency?
+  - "reflected everywhere" → maybe swiftui-expert-skill?
+  - Result: AMBIGUOUS — three skills match equally, no clear winner
+
+With RAG:
+  - RAG-1: intent=create, domain=state-management+concurrency, implicit=@Observable
+  - RAG-2: swiftui-expert-skill (80), swift-concurrency (65), swift-best-practices (25)
+  - RAG-3: Loads state-management.md + actors.md (3 files, not 52)
+  - RAG-5: Score 80 → CONFIDENT
+  - Result: Primary swiftui-expert-skill, secondary swift-concurrency
+```
+
+The RAG engine's scoring rubric uses anti-examples to actively reject false matches (e.g., "fix this Sendable warning" will not trigger swiftui-expert-skill even though it mentions state), producing more assertive routing than keyword matching alone.
+
+See [rag-engine.md](rag-engine.md) and [semantic-index.md](semantic-index.md) for full details.
+
 ## Example workflows
 
 | Task | Skills routed | What loads |
@@ -141,6 +197,8 @@ maestro/
 ├── SKILL.md                 # Orchestrator brain — the full agent logic
 ├── skill-registry.md        # Complete skill catalog with domains and triggers
 ├── routing-engine.md        # Task → skill decision trees and routing tables
+├── semantic-index.md        # Per-skill semantic signatures for RAG matching
+├── rag-engine.md            # 5-phase RAG retrieval protocol
 ├── project-scanner.md       # Project context detection procedures
 └── knowledge-graph.md       # Continuous learning system specification
 ```
@@ -152,6 +210,8 @@ maestro/
 | [SKILL.md](SKILL.md) | Full orchestrator agent behavior, execution flow, all 5 phases |
 | [skill-registry.md](skill-registry.md) | Complete skill catalog, registry format, domain mapping |
 | [routing-engine.md](routing-engine.md) | Decision trees, compound task routing, priority resolution |
+| [semantic-index.md](semantic-index.md) | Per-skill semantic signatures, example queries, anti-examples, capability matrices |
+| [rag-engine.md](rag-engine.md) | 5-phase RAG retrieval protocol, scoring rubric, confidence thresholds |
 | [project-scanner.md](project-scanner.md) | Project scanning procedures, tech stack detection, multi-project support |
 | [knowledge-graph.md](knowledge-graph.md) | Knowledge graph spec, update protocols, skill gap analysis |
 
