@@ -236,8 +236,9 @@ class Chunker:
         file_context = self._extract_context(text, path.name, skill_name)
 
         for section_title, section_body in sections:
-            for sub in self._split_long(section_body):
-                raw_id = f"{skill_name}/{path.name}/{section_title}/{sub[:50]}"
+            for idx, sub in enumerate(self._split_long(section_body)):
+                content_hash = hashlib.md5(sub.encode()).hexdigest()[:12]
+                raw_id = f"{skill_name}/{path.name}/{section_title}/{idx}/{content_hash}"
                 chunk_id = hashlib.md5(raw_id.encode()).hexdigest()
                 contextual = f"[{skill_name} | {path.name}]\n{file_context}\n\n{sub}"
                 chunks.append(Chunk(
@@ -509,6 +510,15 @@ class MaestroEngine:
                 self._collection.delete(where={"skill": {"$exists": True}})
             except Exception:
                 pass
+
+        # Deduplicate chunks by ID (same skill in multiple paths)
+        seen: set[str] = set()
+        unique: list[Chunk] = []
+        for c in chunks:
+            if c.id not in seen:
+                seen.add(c.id)
+                unique.append(c)
+        chunks = unique
 
         batch_size = 64
         texts = [c.contextual_text for c in chunks]

@@ -49,7 +49,7 @@ def _build_skill_index_table(skills: dict) -> str:
         "<!-- Each entry is: skill name | domains | description summary -->",
         "",
         "| {:<20} | {:<33} | {} |".format("Skill", "Domains", "Covers"),
-        "|{:-<22}|{:-<35}|{:-<-}|".format("", "", "-" * 91),
+        "|{:-<22}|{:-<35}|{:-<93}|".format("", "", ""),
     ]
     for name, info in sorted(skills.items()):
         domains = ", ".join(info.get("domains", [])[:3])
