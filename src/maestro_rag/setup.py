@@ -166,7 +166,7 @@ def setup(dry_run: bool, claude_ai_only: bool, keep_originals: bool) -> None:
             steps.append(f"  Add maestro to {MCP_CONFIG}")
             if not dry_run:
                 mcp.setdefault("mcpServers", {})
-                mcp["mcpServers"]["maestro"] = {"command": "maestro-mcp", "args": []}
+                mcp["mcpServers"]["maestro"] = {"command": ".venv/bin/maestro-mcp", "args": []}
                 MCP_CONFIG.write_text(json.dumps(mcp, indent=2))
         else:
             steps.append("  ✓ MCP already configured")

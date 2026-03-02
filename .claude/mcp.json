@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "maestro": {
+      "command": ".venv/bin/maestro-mcp",
+      "args": []
+    }
+  }
+}

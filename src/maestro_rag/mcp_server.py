@@ -6,7 +6,7 @@ automatically indexes all skills in ~/.maestro/skills/.
 No manual `maestro index` step needed.
 
 Setup:
-    .claude/mcp.json → { "mcpServers": { "maestro": { "command": "maestro-mcp" } } }
+    .claude/mcp.json → { "mcpServers": { "maestro": { "command": ".venv/bin/maestro-mcp" } } }
 """
 from __future__ import annotations
 
