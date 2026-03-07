@@ -318,6 +318,7 @@ class MaestroEngine:
             if meta_path.exists() and self._collection.count() > 0:
                 self._indexed = True
                 self._load_bm25_index()
+                self._load_fingerprints()
         except Exception as e:
             print(f"[maestro] ChromaDB init error: {e}", flush=True)
 
@@ -699,7 +700,32 @@ class MaestroEngine:
         INDEX_META.write_text(json.dumps({
             "skills": list(self._fingerprints.keys()),
             "chunk_count": self._collection.count() if self._collection else 0,
+            "skill_info": {
+                name: {
+                    "chunk_count": fp.chunk_count,
+                    "domains": fp.domains,
+                    "description": fp.description,
+                }
+                for name, fp in self._fingerprints.items()
+            },
         }, indent=2))
+
+    def _load_fingerprints(self) -> None:
+        """Reload skill fingerprints from saved index metadata."""
+        try:
+            meta = json.loads(INDEX_META.read_text())
+            skill_info = meta.get("skill_info", {})
+            for name, info in skill_info.items():
+                self._fingerprints[name] = SkillFingerprint(
+                    name=name,
+                    domains=info.get("domains", []),
+                    description=info.get("description", ""),
+                    chunk_count=info.get("chunk_count", 0),
+                )
+            if self._fingerprints:
+                self._embed_fingerprints()
+        except Exception:
+            pass
 
     def _load_bm25_index(self) -> None:
         """Reload BM25 from ChromaDB after restart."""

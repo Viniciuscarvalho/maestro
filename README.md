@@ -9,6 +9,8 @@
   <a href="https://claude.ai/"><img src="https://img.shields.io/badge/Claude_Code-compatible-6c5ce7?style=flat-square" alt="Claude Code"/></a>
   <a href="#install"><img src="https://img.shields.io/badge/Python-3.11+-3776ab?style=flat-square" alt="Python 3.11+"/></a>
   <a href="#mcp"><img src="https://img.shields.io/badge/MCP-enabled-2ea44f?style=flat-square" alt="MCP"/></a>
+  <br/>
+  <a href="https://github.com/sponsors/Viniciuscarvalho"><img src="https://img.shields.io/badge/Sponsor-❤-ea4aaa?style=flat-square" alt="Sponsor"/></a>
 </p>
 
 Maestro is a **production-grade RAG engine** that sits between Claude Code and your skills. It indexes every skill into a vector database, then retrieves only the relevant knowledge for each task — so Claude gets expert context without burning the entire context window.
@@ -78,50 +80,27 @@ The previous version used markdown-based semantic matching and decision trees. *
 
 ## Install
 
-```bash
-pip install maestro-rag
+### As a Claude Code Plugin (recommended)
+
+```
+/plugin install maestro
 ```
 
-Or from source:
+That's it. The plugin automatically:
+- Registers the `search_skills` MCP tool
+- Installs the Gateway SKILL.md
+- Sets up a Python venv at `~/.maestro/.venv/` on first run
+
+### Manual (standalone)
 
 ```bash
 git clone https://github.com/Viniciuscarvalho/maestro.git
 cd maestro
-pip install -e .
+python3 -m venv .venv && .venv/bin/pip install -e .
+.venv/bin/maestro-setup
 ```
 
----
-
-## Quick Start
-
-### 1. Setup (one-time, per machine)
-
-```bash
-# Full setup: moves skills, installs gateway, configures MCP, runs initial index
-maestro-setup
-
-# Claude.ai users (no MCP):
-maestro-setup --claude-ai-only
-
-# Preview what would happen without making changes:
-maestro-setup --dry-run
-```
-
-What `maestro-setup` does:
-1. Creates `~/.maestro/skills/` — the skill knowledge base
-2. Moves skills from `~/.claude/skills/` → `~/.maestro/skills/`
-3. Installs a lightweight Gateway `SKILL.md` in `.claude/skills/maestro/`
-4. Configures MCP in `.claude/mcp.json`
-5. Runs initial indexation and populates the Skill Index in the Gateway
-
-### 2. Configure MCP — per project or globally
-
-`maestro-setup` writes the MCP config to the current project's `.claude/mcp.json`. To use Maestro across **all projects without configuring each one**, add it to your global Claude config instead:
-
-```bash
-# Global config location (applies to every project)
-~/.claude/mcp.json
-```
+For standalone users, add the MCP config manually to `~/.claude/mcp.json`:
 
 ```json
 {
@@ -131,9 +110,30 @@ What `maestro-setup` does:
 }
 ```
 
-With this in place, every project you open in Claude Code automatically has access to `search_skills` — no per-project setup needed.
+---
 
-### 3. That's it — Claude Code does the rest
+## Quick Start
+
+### 1. Setup (one-time, per machine)
+
+Plugin users skip this step — setup is automatic.
+
+Standalone users:
+
+```bash
+# Full setup: moves skills, runs initial index
+maestro-setup
+
+# Preview what would happen without making changes:
+maestro-setup --dry-run
+```
+
+What `maestro-setup` does:
+1. Creates `~/.maestro/skills/` — the skill knowledge base
+2. Moves skills from `~/.claude/skills/` → `~/.maestro/skills/`
+3. Runs initial indexation and populates the Skill Index in the Gateway
+
+### 2. That's it — Claude Code does the rest
 
 After setup, open any project in Claude Code and start working normally. Maestro is active in the background:
 
@@ -274,16 +274,23 @@ maestro clear               Clear the index
 
 ```
 maestro/
-├── SKILL.md                      # Gateway (Claude loads this only)
-├── docs/
-│   └── architecture.md           # Technical architecture deep-dive
+├── .claude-plugin/
+│   └── plugin.json               # Plugin manifest
+├── skills/
+│   └── maestro/
+│       └── SKILL.md              # Gateway (Claude loads this only)
+├── hooks/
+│   └── hooks.json                # SessionStart hook for auto-setup
+├── .mcp.json                     # Plugin MCP server config
+├── scripts/
+│   └── maestro-mcp.sh            # Wrapper that ensures venv + runs MCP
 ├── pyproject.toml                # Package config
 └── src/maestro_rag/
     ├── engine.py                 # Core RAG engine (T1–T5)
     ├── concept_graph.py          # Pre-computed Swift concept graph (T1)
     ├── cli.py                    # CLI commands
     ├── mcp_server.py             # MCP stdio server
-    └── setup.py                  # One-command setup
+    └── setup.py                  # Skill migration + indexation
 ```
 
 ---
@@ -293,6 +300,16 @@ maestro/
 - Python 3.11+
 - Any Claude interface (Claude Code with MCP recommended, Claude.ai supported)
 - Skills installed in `~/.maestro/skills/` or `~/.claude/skills/`
+
+---
+
+## Support the Project
+
+If Maestro saves you time and context tokens, consider sponsoring the project. Your support helps keep it maintained and drives new features.
+
+<a href="https://github.com/sponsors/Viniciuscarvalho">
+  <img src="https://img.shields.io/badge/Sponsor_Maestro-❤-ea4aaa?style=for-the-badge" alt="Sponsor Maestro"/>
+</a>
 
 ---
 

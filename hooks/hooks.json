@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [{
+          "type": "command",
+          "command": "${CLAUDE_PLUGIN_ROOT}/scripts/maestro-mcp.sh --version 2>/dev/null || echo 'Maestro: installing dependencies (first run)...'"
+        }]
+      }
+    ]
+  }
+}

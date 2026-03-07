@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "maestro": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/maestro-mcp.sh",
+      "args": []
+    }
+  }
+}
