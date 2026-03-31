@@ -55,6 +55,13 @@ class Config:
     chunk_max_tokens: int = 400
     cache_enabled: bool = True
     cache_similarity: float = 0.92
+    # Diffusion RL (Phase 1-3)
+    diffusion_rl_enabled: bool = False
+    diffusion_iterations: int = 3
+    hjb_discount_factor: float = 0.95
+    hjb_reward_db: Path = field(default_factory=lambda: MAESTRO_HOME / "reward_cache.db")
+    hjb_learning_rate: float = 0.01
+    hjb_min_episodes: int = 10
 
     @classmethod
     def load(cls, path: Path | None = None) -> Config:
@@ -67,6 +74,13 @@ class Config:
             c.embedding_provider = d.get("embedding_provider", "local")
             c.reranker_enabled = d.get("reranker_enabled", True)
             c.top_k = d.get("top_k", 7)
+            c.diffusion_rl_enabled = d.get("diffusion_rl_enabled", False)
+            c.diffusion_iterations = d.get("diffusion_iterations", 3)
+            c.hjb_discount_factor = d.get("hjb_discount_factor", 0.95)
+            if "hjb_reward_db" in d:
+                c.hjb_reward_db = Path(d["hjb_reward_db"])
+            c.hjb_learning_rate = d.get("hjb_learning_rate", 0.01)
+            c.hjb_min_episodes = d.get("hjb_min_episodes", 10)
             return c
         return cls()
 
@@ -302,6 +316,7 @@ class MaestroEngine:
         self._cache: dict[str, SearchResponse] = {}
         self._concept_graph = get_swift_concept_graph()
         self._indexed = False
+        self._last_incremental_result: dict | None = None
         self._init_db()
 
     def _init_db(self) -> None:
@@ -323,9 +338,64 @@ class MaestroEngine:
             print(f"[maestro] ChromaDB init error: {e}", flush=True)
 
     def _ensure_indexed(self) -> None:
-        """Auto-index on first search if no index exists."""
+        """Auto-index on first search if no index exists, then check for new skills."""
         if not self._indexed or (self._collection and self._collection.count() == 0):
             self.index()
+        else:
+            self._incremental_index_new_skills()
+
+    def _incremental_index_new_skills(self) -> dict | None:
+        """Detect and index skills added since last full index. Returns stats or None."""
+        self._last_incremental_result = None
+        discovered = {d.name: d for d in self._discover_skills()}
+        indexed = set(self._fingerprints.keys())
+        new_names = set(discovered.keys()) - indexed
+        if not new_names:
+            return None
+
+        new_dirs = [discovered[n] for n in new_names]
+        chunker = Chunker(self.config.chunk_max_tokens)
+        all_chunks: list[Chunk] = []
+
+        for skill_dir in new_dirs:
+            skill_name = skill_dir.name
+            domains = self._extract_domains(skill_dir)
+            skill_chunks: list[Chunk] = []
+            for md_file in skill_dir.rglob("*.md"):
+                if md_file.name.startswith("."):
+                    continue
+                try:
+                    skill_chunks.extend(chunker.chunk_file(md_file, skill_name, domains))
+                except Exception:
+                    pass
+            if skill_chunks:
+                all_chunks.extend(skill_chunks)
+                self._fingerprints[skill_name] = SkillFingerprint(
+                    name=skill_name,
+                    description=self._extract_description(skill_dir),
+                    domains=domains,
+                    chunk_count=len(skill_chunks),
+                )
+
+        if not all_chunks:
+            return None
+
+        self._store_chunks(all_chunks, force=False)
+        self._embed_fingerprints()
+        # Rebuild BM25 with all docs (existing + new)
+        if self._collection:
+            try:
+                all_data = self._collection.get(include=["documents"])
+                if all_data["ids"]:
+                    self._bm25.fit(all_data["documents"], all_data["ids"])
+            except Exception:
+                pass
+        self._save_index_meta()
+        self._refresh_skill_index_files()
+
+        result = {"new_skills": sorted(new_names), "new_chunks": len(all_chunks)}
+        self._last_incremental_result = result
+        return result
 
     def index(
         self,
@@ -417,8 +487,29 @@ class MaestroEngine:
         # T4c: RRF fusion
         fused = self._rrf_fuse(sem_results, bm25_results)
 
-        # T5: Cross-encoder reranking
-        if self.config.reranker_enabled and fused:
+        # T5/T6: Reranking — diffusion (T6) takes priority over cross-encoder (T5)
+        if self.config.diffusion_rl_enabled and fused:
+            from .diffusion_ranker import DiffusionRanker
+            from .hjb_solver import HJBSolver, RewardCache, FeedbackAggregator
+            from .query_classifier import QueryClassifier
+
+            cache = RewardCache(self.config.hjb_reward_db)
+            ranker = DiffusionRanker(iterations=self.config.diffusion_iterations)
+            hjb = HJBSolver(
+                discount=self.config.hjb_discount_factor,
+                learning_rate=self.config.hjb_learning_rate,
+                min_episodes=self.config.hjb_min_episodes,
+                cache=cache,
+            )
+            profile = QueryClassifier().classify(query)
+            feedback = FeedbackAggregator(cache=cache)
+            fused = ranker.rerank(
+                query, fused, self._embedder,
+                hjb_solver=hjb,
+                query_profile=profile,
+                feedback_aggregator=feedback,
+            )
+        elif self.config.reranker_enabled and fused:
             fused = self._rerank(query, fused)
 
         final = fused[:top_k]
@@ -694,6 +785,61 @@ class MaestroEngine:
         na = math.sqrt(sum(x * x for x in a))
         nb = math.sqrt(sum(x * x for x in b))
         return dot / (na * nb) if na and nb else 0.0
+
+    def _refresh_skill_index_files(self) -> list[str]:
+        """Update SKILL_INDEX in all known SKILL.md locations after incremental index."""
+        idx_start = "<!-- SKILL_INDEX_START -->"
+        idx_end = "<!-- SKILL_INDEX_END -->"
+
+        skills = {
+            name: {
+                "domains": fp.domains,
+                "description": fp.description,
+            }
+            for name, fp in self._fingerprints.items()
+        }
+
+        header_line = "| {:<20} | {:<33} | {} |".format("Skill", "Domains", "Covers")
+        sep_line = "|{:-<22}|{:-<35}|{:-<93}|".format("", "", "")
+        lines = [
+            "<!-- This section is auto-generated by `maestro index`. -->",
+            "<!-- Each entry is: skill name | domains | description summary -->",
+            "",
+            header_line,
+            sep_line,
+        ]
+        for name in sorted(skills):
+            info = skills[name]
+            domains = ", ".join(info.get("domains", [])[:3])
+            covers = (info.get("description") or "").strip()
+            if len(covers) > 110:
+                covers = covers[:107] + "..."
+            lines.append(f"| {name:<20} | {domains:<33} | {covers:<} |")
+
+        new_block = f"{idx_start}\n" + "\n".join(lines) + f"\n{idx_end}"
+
+        candidates = [
+            Path("SKILL.md"),
+            Path(".claude") / "skills" / "maestro" / "SKILL.md",
+            Path.home() / ".claude" / "skills" / "maestro" / "SKILL.md",
+        ]
+        updated: list[str] = []
+        for p in candidates:
+            if not p.exists():
+                continue
+            text = p.read_text(encoding="utf-8")
+            if idx_start not in text or idx_end not in text:
+                continue
+            replaced = re.sub(
+                re.escape(idx_start) + r".*?" + re.escape(idx_end),
+                new_block,
+                text,
+                flags=re.DOTALL,
+            )
+            if replaced != text:
+                p.write_text(replaced, encoding="utf-8")
+                updated.append(str(p))
+        return updated
 
     def _save_index_meta(self) -> None:
         MAESTRO_HOME.mkdir(parents=True, exist_ok=True)

@@ -1,9 +1,16 @@
 {
   "name": "maestro",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "RAG-powered skill knowledge gateway — auto-routes 100+ skills to every coding task",
-  "author": { "name": "Vinicius Carvalho" },
+  "author": {
+    "name": "Vinicius Carvalho"
+  },
   "repository": "https://github.com/Viniciuscarvalho/maestro",
   "license": "MIT",
-  "keywords": ["rag", "skills", "knowledge", "search"]
+  "keywords": [
+    "rag",
+    "skills",
+    "knowledge",
+    "search"
+  ]
 }

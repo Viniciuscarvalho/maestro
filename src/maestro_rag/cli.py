@@ -107,7 +107,7 @@ def _refresh_skill_index(skills: dict) -> list[str]:
 
 
 @click.group()
-@click.version_option("1.0.0", prog_name="maestro")
+@click.version_option("1.0.1", prog_name="maestro")
 def main() -> None:
     """Maestro — one-shot skill knowledge retrieval."""
     pass

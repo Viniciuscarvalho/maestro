@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2026-03-31
+
+### Added
+
+- **Diffusion Ranker (T6)** — iterative reranking via score diffusion, replacing one-shot cross-encoder (T5) when enabled. Builds similarity graph between chunks and propagates relevance scores across iterations with convergence-based early stopping
+- **HJB-Bellman Solver** — optimal ranking via value function learning. Tri-component reward (relevance + context_fit + skill_affinity) with Bellman update, SQLite-backed reward cache, and adaptive damping per query state
+- **Query Classifier** — context-aware diffusion scheduling per query type (architecture, api, pattern, tool, general). Each type gets tailored iterations, reward weights, and convergence thresholds
+- **Feedback Aggregator** — tracks chunk usage per query type for skill affinity learning, with configurable retraining interval and per-skill per-type affinity weights
+- **Incremental skill auto-detection** — automatically discovers and indexes new skills added to `.claude/skills/` without requiring manual reindex, updating SKILL.md index tables
+- Config options: `diffusion_rl_enabled`, `diffusion_iterations`, `hjb_discount_factor`, `hjb_reward_db`, `hjb_learning_rate`, `hjb_min_episodes`
+- 64 unit tests covering all new modules (diffusion ranker, HJB solver, query classifier, feedback aggregator, incremental indexing)
+
 ## [1.0.0] - 2026-03-06
 
 ### Added

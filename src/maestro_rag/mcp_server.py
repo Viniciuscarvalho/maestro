@@ -100,7 +100,7 @@ def run_mcp_server() -> None:
                 "result": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {"tools": {}},
-                    "serverInfo": {"name": "maestro-rag", "version": "1.0.0"},
+                    "serverInfo": {"name": "maestro-rag", "version": "1.0.1"},
                 },
             }
         elif method == "notifications/initialized":
@@ -128,6 +128,9 @@ def _handle(engine: MaestroEngine, config: Config, name: str, args: dict) -> str
         query = args.get("query", "")
         top_k = min(args.get("top_k", 7), 15)
         response = engine.search(query, top_k=top_k)
+        # _incremental_index_new_skills runs inside search() via _ensure_indexed()
+        # Capture result for reporting
+        new_skills_info = getattr(engine, '_last_incremental_result', None)
 
         if not response.results:
             status = engine.status()
@@ -148,6 +151,8 @@ def _handle(engine: MaestroEngine, config: Config, name: str, args: dict) -> str
         )
         if response.expanded_terms:
             meta += f"\nConcepts added: {', '.join(response.expanded_terms)}"
+        if new_skills_info:
+            meta += f"\n🆕 Auto-indexed new skills: {', '.join(new_skills_info['new_skills'])} ({new_skills_info['new_chunks']} chunks)"
         return f"{meta}\n\n{context}"
 
     elif name == "reindex_skills":

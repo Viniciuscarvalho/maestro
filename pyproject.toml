@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "maestro-rag"
-version = "1.0.0"
+version = "1.0.1"
 description = "Production-grade RAG for skill knowledge retrieval — one-shot search at 100+ skills"
 readme = "README.md"
 license = "MIT"
@@ -29,6 +29,9 @@ maestro-setup = "maestro_rag.setup:setup"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/maestro_rag"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
