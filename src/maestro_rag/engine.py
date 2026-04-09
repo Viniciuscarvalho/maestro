@@ -167,7 +167,10 @@ class Embedder:
     def _local_embed(self, texts: list[str]) -> list[list[float]]:
         if self._model is None:
             from sentence_transformers import SentenceTransformer
-            self._model = SentenceTransformer(self.config.local_model)
+            try:
+                self._model = SentenceTransformer(self.config.local_model, local_files_only=True)
+            except Exception:
+                self._model = SentenceTransformer(self.config.local_model)
         vecs = self._model.encode(texts, convert_to_numpy=True, show_progress_bar=False)
         return [v.tolist() for v in vecs]
 

@@ -89,11 +89,11 @@ These are the skills available in the knowledge base. Use this index to understa
 | app-marketing-context | app-marketing-context             | When the user wants to create or update their app marketing context document. Also use when the user mentio... |
 | app-store-featured   | app-store-featured                | When the user wants to get featured on the App Store or understand the editorial process. Also use when the... |
 | asc-build-lifecycle  | asc-build-lifecycle               | Track build processing, find latest builds, and clean up old builds with asc. Use when managing build reten... |
-| asc-cli-usage        | asc-cli-usage                     | Guidance for using the App Store Connect CLI in this repo (flags, output formats, pagination, auth, and dis... |
+| asc-cli-usage        | asc-cli-usage                     | Guidance for using asc cli in this repo (flags, output formats, pagination, auth, and discovery). Use when ... |
 | asc-id-resolver      | asc-id-resolver                   | Resolve App Store Connect IDs (apps, builds, versions, groups, testers) from human-friendly names using asc... |
-| asc-metadata-sync    | asc-metadata-sync                 | Sync and validate App Store metadata and localizations with asc, including Fastlane format migration. Use w... |
+| asc-metadata-sync    | asc-metadata-sync                 | Sync and validate App Store metadata and localizations with asc, including legacy metadata format migration... |
 | asc-release-flow     | asc-release-flow                  | End-to-end release workflows for TestFlight and App Store using asc publish, builds, versions, and submit c... |
-| asc-signing-setup    | asc-signing-setup                 | Set up bundle IDs, capabilities, signing certificates, and provisioning profiles with the asc CLI. Use when... |
+| asc-signing-setup    | asc-signing-setup                 | Set up bundle IDs, capabilities, signing certificates, and provisioning profiles with the asc cli. Use when... |
 | asc-submission-health | asc-submission-health             | Preflight App Store submissions, submit builds, and monitor review status with asc. Use when shipping or tr... |
 | asc-testflight-orchestration | asc-testflight-orchestration      | Orchestrate TestFlight distribution, groups, testers, and What to Test notes using asc. Use when rolling ou... |
 | asc-xcode-build      | asc-xcode-build                   | Build, archive, and export iOS/macOS apps with xcodebuild before uploading to App Store Connect. Use when y... |
@@ -101,32 +101,56 @@ These are the skills available in the knowledge base. Use this index to understa
 | changelog-generator  | changelog-generator               | Automatically creates user-facing changelogs from git commits by analyzing commit history, categorizing cha... |
 | code-analyzer        | code-analyzer                     | Read-only code analysis for architecture review and code quality assessment. Use when reviewing PRs or anal... |
 | competitor-analysis  | competitor-analysis               | When the user wants to analyze competitors' App Store strategy, find keyword gaps, or understand competitiv... |
+| connect              | connect                           | Find connections between patterns and update domain guides. Requires semantic judgment to identify genuine ... |
 | context-optimization | context-optimization              | Apply optimization techniques to extend effective context capacity. Use when context limits constrain agent... |
 | creating-pr          | creating-pr                       | Use when creating or updating pull requests with comprehensive descriptions and meaningful commits - stream... |
 | dogfood              | dogfood                           | Systematically explore and test a web application to find bugs, UX issues, and other problems. Use when ask... |
+| extract              | extract                           | Extract structured iOS development patterns from source material. Comprehensive extraction is the default —... |
 | feature-marker       | feature-marker                    | Platform-agnostic workflow automation with checkpoints (PRD/TechSpec/Tasks generation + implementation + te... |
+| feature-marker-feature-marker | feature-marker-feature-marker     | You are operating as a **feature development orchestrator**. You automate the full lifecycle from requireme... |
 | find-skills          | find-skills                       | Helps users discover and install agent skills when they ask questions like "how do I do X", "find a skill f... |
 | frontend-design      | frontend-design                   | Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the ... |
+| graph                | graph                             | Interactive knowledge graph analysis. Routes natural language questions to graph scripts, interprets result... |
 | keyword-research     | keyword-research                  | When the user wants to discover, evaluate, or prioritize App Store keywords. Also use when the user mention... |
+| learn                | learn                             | Research a topic and grow your knowledge graph. Uses Exa deep researcher, web search, or basic search to in... |
 | localization         | localization                      | When the user wants to localize their App Store listing for international markets. Also use when the user m... |
 | maestro              | maestro                           | Intelligent skill knowledge gateway. Routes tasks to the right knowledge without loading all skills into co... |
 | metadata-optimization | metadata-optimization             | When the user wants to optimize App Store metadata — title, subtitle, keyword field, or description. Also u... |
 | monetization-strategy | monetization-strategy             | When the user wants to design or optimize their app's monetization — pricing, paywalls, subscriptions, or i... |
+| next                 | next                              | Surface the most valuable next action by combining task stack, queue state, inbox pressure, health, and goa... |
 | peon-ping-config     | peon-ping-config                  | Update peon-ping configuration — volume, pack rotation, categories, active pack, and other settings. Use wh... |
 | peon-ping-log        | peon-ping-log                     | Log exercise reps for the Peon Trainer. Use when user says they did pushups, squats, or wants to log reps. ... |
 | peon-ping-toggle     | peon-ping-toggle                  | Toggle peon-ping sound notifications on/off. Use when user wants to mute, unmute, pause, or resume peon sou... |
 | peon-ping-use        | peon-ping-use                     | Set which voice pack (character voice) plays for the current chat session. Automatically enables agentskill... |
+| pipeline             | pipeline                          | End-to-end source processing -- seed, extract, process all patterns through connect/update/verify, archive.... |
+| ralph                | ralph                             | Queue processing with fresh context per phase. Processes N tasks from the queue, spawning isolated subagent... |
+| refactor             | refactor                          | Plan vault restructuring from config changes. Compares config.yaml against derivation.md, identifies dimens... |
+| remember             | remember                          | Capture friction as methodology notes. Three modes — explicit description, contextual (review recent correc... |
 | remotion-best-practices | remotion-best-practices           | Best practices for Remotion - Video creation in React |
 | retention-optimization | retention-optimization            | When the user wants to reduce churn, improve user engagement, or increase lifetime value. Also use when the... |
+| rethink              | rethink                           | Challenge system assumptions against accumulated evidence. Triages observations and tensions, detects patte... |
 | review-management    | review-management                 | When the user wants to analyze, respond to, or improve their app reviews and ratings. Also use when the use... |
 | screenshot-optimization | screenshot-optimization           | When the user wants to design, optimize, or evaluate App Store screenshots and preview videos. Also use whe... |
+| seed                 | seed                              | Add a source file to the processing queue. Checks for duplicates, creates archive folder, moves source from... |
+| spm-build-analysis   | spm-build-analysis                | Analyze Swift Package Manager dependencies, package plugins, module variants, and CI-oriented build overhea... |
+| stats                | stats                             | Show vault statistics and knowledge graph metrics. Provides a shareable snapshot of vault health, growth, a... |
 | swift-code-reviewer-skill | swift-code-reviewer-skill         | Perform thorough code reviews for Swift/SwiftUI code, analyzing code quality, architecture, performance, se... |
 | swift-concurrency    | swift-concurrency                 | Expert guidance on Swift Concurrency best practices, patterns, and implementation. Use when developers ment... |
 | swift-expert         | swift-expert                      | Swift specialist for iOS/macOS development with Swift 6.0+, SwiftUI, async/await concurrency, and protocol-... |
 | swift-testing        | swift-testing                     | Expert guidance on Swift Testing best practices, patterns, and implementation. Use when developers mention:... |
 | swift-testing-expert | swift-testing-expert              | Expert guidance for Swift Testing: test structure, #expect/#require macros, traits and tags, parameterized ... |
 | swiftui-expert-skill | swiftui-expert-skill              | Write, review, or improve SwiftUI code following best practices for state management, view composition, per... |
+| swiftui-ui-patterns  | swiftui-ui-patterns               | Best practices and example-driven guidance for building SwiftUI views and components, including navigation ... |
+| tasks                | tasks                             | View and manage the task stack and processing queue. Shows pending work, active tasks, completed items, and... |
 | ua-campaign          | ua-campaign                       | When the user wants to plan or optimize paid user acquisition campaigns. Also use when the user mentions "A... |
+| update               | update                            | Update old patterns with new connections. The backward pass that /connect doesn't do. Revisit existing patt... |
+| validate             | validate                          | Schema validation for patterns. Checks against domain-specific templates. Validates required fields, enum v... |
+| verify               | verify                            | Combined verification — recite (description quality via cold-read prediction) + validate (schema compliance... |
+| xcode-build-benchmark | xcode-build-benchmark             | Benchmark Xcode clean and incremental builds with repeatable inputs, timing summaries, and timestamped `.bu... |
+| xcode-build-fixer    | xcode-build-fixer                 | Apply approved Xcode build optimization changes following best practices, then re-benchmark to verify impro... |
+| xcode-build-orchestrator | xcode-build-orchestrator          | Orchestrate Xcode build optimization by benchmarking first, running the specialist analysis skills, priorit... |
+| xcode-compilation-analyzer | xcode-compilation-analyzer        | Analyze Swift and mixed-language compile hotspots using build timing summaries and Swift frontend diagnosti... |
+| xcode-project-analyzer | xcode-project-analyzer            | Audit Xcode project configuration, build settings, scheme behavior, and script phases to find build-time im... |
 | xcodebuildmcp-cli    | xcodebuildmcp-cli                 | Official skill for the XcodeBuildMCP CLI. Use when doing iOS/macOS/watchOS/tvOS/visionOS work (build, test,... |
 | zellij-specialist    | zellij-specialist                 | Terminal multiplexer specialist for layout design, plugin development, and session management |
 <!-- SKILL_INDEX_END -->
